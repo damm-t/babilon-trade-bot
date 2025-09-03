@@ -1,13 +1,11 @@
 import os
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+from dotenv import load_dotenv
 
-# Your Alpaca paper keys here
-ALPACA_API_KEY = "PKUJXH1B7ZGBXYIHXNQM"
-ALPACA_SECRET_KEY = "9wEt14KNFNzQQHy47KHbrmBIirsgV6BatrH7J1Hz"
+load_dotenv()
 
-# Configuration settings
-STOCK_SYMBOL = "NVDA"
-# in config.py
-POSITIVE_THRESHOLD = 0.65
-NEGATIVE_THRESHOLD = 0.7
+ALPACA_API_KEY = os.getenv("ALPACA_API_KEY")
+ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY")
+
+STOCK_SYMBOL = os.getenv("STOCK_SYMBOL", "NVDA")
+TRADE_THRESHOLD = 0.7

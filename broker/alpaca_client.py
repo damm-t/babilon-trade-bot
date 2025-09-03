@@ -1,3 +1,4 @@
+import logging
 import os
 
 import alpaca_trade_api as tradeapi
@@ -15,14 +16,14 @@ def place_order(client, symbol, side, qty=1):
     try:
         position = client.get_position(symbol)
         if side.lower() == 'buy' and float(position.qty) > 0:
-            print(f"Already holding {symbol}, skipping BUY to avoid wash trade.")
+            logging.warning(f"Already holding {symbol}, skipping BUY to avoid wash trade.")
             return None
         if side.lower() == 'sell' and float(position.qty) == 0:
-            print(f"No holdings of {symbol}, skipping SELL.")
+            logging.warning(f"No holdings of {symbol}, skipping SELL.")
             return None
     except:
         if side.lower() == 'sell':
-            print(f"No holdings of {symbol}, skipping SELL.")
+            logging.warning(f"No holdings of {symbol}, skipping SELL.")
             return None
 
     return client.submit_order(
