@@ -4,11 +4,19 @@ import time
 
 import yfinance as yf
 from broker.alpaca_client import get_alpaca_client, place_order
-from config import NEGATIVE_THRESHOLD, POSITIVE_THRESHOLD
+from dotenv import load_dotenv
 from logic.trade_decision import generate_trade_signal
 from model.sentiment_model import analyze_sentiment
 from visualization.chart_data import format_chart_data, to_json
 from visualization.export_plot import export_candlestick
+
+load_dotenv()
+ALPACA_API_KEY = os.getenv("ALPACA_API_KEY", "")
+ALPACA_SECRET_KEY = os.getenv("ALPACA_SECRET_KEY", "")
+
+# Default thresholds if not set in .env
+POSITIVE_THRESHOLD = float(os.getenv("POSITIVE_THRESHOLD", 0.65))
+NEGATIVE_THRESHOLD = float(os.getenv("NEGATIVE_THRESHOLD", 0.7))
 
 # Example news headline to simulate input (replace with real source if available)
 sample_news = {
@@ -29,12 +37,14 @@ def run_auto_trader():
         sentiment, score = analyze_sentiment(news)
 
         ticker = yf.Ticker(stock)
-        hist = ticker.history(period="5d")
+        hist = ticker.history(period="3mo")
         if hist.empty:
             print(f"[{stock}] No historical data available, skipping.")
             continue
         current_price = hist["Close"].iloc[-1]
         reference_price = hist["Close"].mean()
+
+        recent_hist = hist.tail(60)
 
         print(f"DEBUG -> sentiment={sentiment}, score={score}, "f"current_price={current_price}, ref_price={reference_price}")
 
@@ -53,7 +63,7 @@ def run_auto_trader():
 
         # Convert price history into JSON format
         prices = []
-        recent_hist = hist.tail(20)  # take last 20 rows
+        recent_hist = hist.tail(60)  # take last 20 rows
         for idx, row in recent_hist.iterrows():
             prices.append({
                 "timestamp": idx.isoformat(),
@@ -75,6 +85,13 @@ def run_auto_trader():
             })
         else:
             print(f"[{stock}] No trade executed.")
+            if os.getenv("FORCE_TEST_SIGNAL", "False").lower() == "true":
+                signals.append({
+                    "timestamp": datetime.datetime.utcnow().isoformat(),
+                    "price": float(current_price),
+                    "type": "BUY" if sentiment == "positive" else "SELL"
+                })
+                print(f"[{stock}] Test signal added for visualization.")
 
         # Save JSON chart data
         chart_json_path = os.path.join(OUTPUT_DIR, f"{stock}_chart.json")
