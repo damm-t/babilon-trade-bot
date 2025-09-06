@@ -1,4 +1,7 @@
-
-transformers
+streamlit
+pandas
+plotly
 torch
+transformers
 alpaca-trade-api
+python-dotenv
