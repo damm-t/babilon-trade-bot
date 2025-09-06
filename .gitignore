@@ -1,2 +1,24 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# macOS specific
+.DS_Store
+
+# Local virtual environments — don't commit
+.venv/
+venv/
+env/
+
+# Secrets
 .env
-data/logs.csv
+.env.*  # any other env variants
+
+# Generated files and outputs
+visualization/output/
+# Keep folder in repo:
+!visualization/output/.gitkeep
+
+# Log and data files
+data/
+*.log

@@ -12,8 +12,21 @@ from config import NEGATIVE_THRESHOLD, POSITIVE_THRESHOLD, STOCK_SYMBOLS
 from logic.trade_decision import generate_trade_signal
 from model.sentiment_model import analyze_sentiment
 
+ALPACA_KEY_ID = os.environ.get("APCA_API_KEY_ID")
+ALPACA_SECRET_KEY = os.environ.get("APCA_API_SECRET_KEY")
+
 # Sidebar controls
 st.sidebar.header("⚙️ Settings")
+
+enable_alpaca_trading = st.sidebar.checkbox("Enable Alpaca Trading", value=False)
+
+if enable_alpaca_trading:
+    ALPACA_KEY_ID = st.sidebar.text_input("Alpaca API Key ID", value=ALPACA_KEY_ID or "", type="password")
+    ALPACA_SECRET_KEY = st.sidebar.text_input("Alpaca Secret Key", value=ALPACA_SECRET_KEY or "", type="password")
+else:
+    ALPACA_KEY_ID = None
+    ALPACA_SECRET_KEY = None
+
 force_test_signal = st.sidebar.checkbox(
     "Force Test Signal", value=os.environ.get("FORCE_TEST_SIGNAL", "False") == "True"
 )
@@ -31,6 +44,34 @@ neg_threshold = st.sidebar.slider(
     float(os.environ.get("NEGATIVE_THRESHOLD", 0.7)),
     0.01,
 )
+trade_mode = st.sidebar.radio("Trading Mode:", ["Demo", "Live"])
+
+if not enable_alpaca_trading:
+    trade_mode = "Demo"
+elif trade_mode == "Live":
+    if ALPACA_KEY_ID and ALPACA_SECRET_KEY:
+        pass  # keep Live mode
+    else:
+        st.sidebar.warning("⚠️ Alpaca keys missing. Switching to Demo mode.")
+        trade_mode = "Demo"
+
+with st.sidebar.expander("ℹ️ How to Use"):
+    st.write("""
+    - **Demo Mode** → safe, no trades are sent.
+    - **Live Mode** → requires valid Alpaca API keys.
+    - Paste a news headline → AI will analyze sentiment.
+    - Select stocks → system generates BUY/SELL/HOLD signals.
+    - Candlestick charts → show recent data + trade signals.
+    - Logs → last 10 actions are listed below.
+    """)
+    
+client = None
+if trade_mode == "Live":
+    if ALPACA_KEY_ID and ALPACA_SECRET_KEY:
+        client = get_alpaca_client()
+    else:
+        st.sidebar.warning("⚠️ Alpaca keys missing. Switching to Demo mode.")
+        trade_mode = "Demo"
 
 st.title("📈 Babilon AI Stock Sentiment Trader")
 
@@ -71,7 +112,14 @@ if st.button("Analyze & Trade"):
     elif not selected_stocks:
         st.warning("Please select at least one stock.")
     else:
-        client = get_alpaca_client()
+        if trade_mode == "Live" and enable_alpaca_trading and ALPACA_KEY_ID and ALPACA_SECRET_KEY:
+            client = get_alpaca_client()
+        else:
+            client = None
+            if trade_mode == "Live":
+                st.sidebar.warning("⚠️ Alpaca keys missing or Alpaca Trading disabled. Running in Demo mode.")
+                trade_mode = "Demo"
+
         for stock in selected_stocks:
             sentiment, score = analyze_sentiment(news_input)
             decision = generate_trade_signal(
@@ -90,8 +138,11 @@ if st.button("Analyze & Trade"):
             st.markdown(f"**Decision:** `{decision}`")
 
             if decision in ["BUY", "SELL"]:
-                place_order(client, stock, decision)
-                st.success(f"{decision} order placed for {stock}")
+                if trade_mode == "Live" and client:
+                    place_order(client, stock, decision)
+                    st.success(f"{decision} order placed for {stock} (Live)")
+                else:
+                    st.info(f"Simulated {decision} for {stock} (Demo mode)")
             else:
                 st.info("No trade executed.")
 
@@ -160,7 +211,27 @@ if st.button("Analyze & Trade"):
                     )
                     st.plotly_chart(fig, use_container_width=True)
             except FileNotFoundError:
-                st.warning(f"No chart data found for {stock}.")
+                st.warning(f"No chart data found for {stock}. Showing demo data instead.")
+                demo_times = pd.date_range(end=datetime.datetime.now(), periods=10).tolist()
+                demo_prices = [100 + i + (i % 3) * 2 for i in range(10)]
+                fig = go.Figure(
+                    data=[go.Candlestick(
+                        x=demo_times,
+                        open=demo_prices,
+                        high=[p+3 for p in demo_prices],
+                        low=[p-3 for p in demo_prices],
+                        close=demo_prices,
+                    )]
+                )
+                fig.add_trace(go.Scatter(
+                    x=[demo_times[5]],
+                    y=[demo_prices[5]],
+                    mode="markers+text",
+                    marker=dict(symbol="arrow-up", color="green", size=16),
+                    text=["BUY"],
+                    textposition="top center"
+                ))
+                st.plotly_chart(fig, use_container_width=True)
             except Exception as e:
                 st.warning(f"Could not render chart: {e}")
             st.sidebar.subheader("📜 Recent Logs")

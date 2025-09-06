@@ -17,4 +17,5 @@ timestamp,input_text,sentiment,score,decision,stock_symbol
 2025-09-05T03:10:26.775892,https://finance.yahoo.com/news/augment-raises-85m-scale-augie-184202076.html,neutral,0.924060881137848,HOLD,GOOGL
 2025-09-05T03:10:33.870937,https://finance.yahoo.com/news/augment-raises-85m-scale-augie-184202076.html,neutral,0.924060881137848,HOLD,NVDA
 2025-09-05T03:10:33.898487,https://finance.yahoo.com/news/augment-raises-85m-scale-augie-184202076.html,neutral,0.924060881137848,HOLD,MSFT
-2025-09-05T11:32:38.749420,https://www.cnbc.com/2025/09/05/trum-japan-trade-deal-tariffs-ishiba-ldp-party.html,neutral,0.9254665374755859,HOLD,GOOGL
+2025-09-05T11:32:38.749420,https://www.cnbc.com/2025/09/05/trum-japan-trade-deal-tariffs-ishiba-ldp-party.html,neutral,0.925466537475586,HOLD,GOOGL
+2025-09-06T22:55:31.875133,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.fool.com/investing/2025/09/06/nvidia-stock-is-a-5-trillion-valuation-inevitable/&ved=2ahUKEwil5_-lssSPAxUtTWwGHT9TGkEQvOMEKAB6BAgYEAE&usg=AOvVaw1C6YGPCVvEYocddlTcE1AX,neutral,0.89597088098526,HOLD,NVDA
