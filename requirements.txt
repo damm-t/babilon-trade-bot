@@ -5,3 +5,7 @@ torch
 transformers
 alpaca-trade-api
 python-dotenv
+fastapi
+uvicorn
+requests
+yfinance
