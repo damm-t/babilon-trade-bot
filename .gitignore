@@ -1,3 +1,42 @@
+# IDE/Editor settings
+.vscode/
+.idea/
+*.swp
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Data & model artifacts
+*.h5
+*.pkl
+*.joblib
+*.csv
+*.db
+
+# Visualization outputs
+visualization/output/*.json
+visualization/output/*.png
+
+# Local configs
+config_local.py
+
+# Environments
+.env
+.venv/
+venv/
+env/
+ENV/
+**/.Python
+pip-log.txt
+pip-delete-this-directory.txt
+poetry.lock
+Pipfile.lock
+
 # Python cache files
 __pycache__/
 *.py[cod]
