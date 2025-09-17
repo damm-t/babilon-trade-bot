@@ -5,6 +5,8 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime
 import os
+from logic.portfolio import load_portfolio, upsert_holding, remove_holding, compute_portfolio_metrics
+from logic.backtest import simulate_from_logs
 
 # API Configuration
 API_BASE_URL = "http://localhost:8000"
@@ -310,15 +312,78 @@ with tab2:
 with tab3:
     st.header("Portfolio & Trading History")
     
-    # This would integrate with your existing logging system
-    st.info("Portfolio view coming soon! This will show your trading history and portfolio performance.")
+    # --- Portfolio Section ---
+    st.subheader("Holdings")
+    with st.form("add_holding_form", clear_on_submit=True):
+        col_a, col_b, col_c, col_d = st.columns([1,1,1,2])
+        with col_a:
+            sym_in = st.text_input("Symbol", placeholder="AAPL")
+        with col_b:
+            qty_in = st.number_input("Quantity", min_value=0.0, step=1.0)
+        with col_c:
+            price_in = st.number_input("Avg Price", min_value=0.0, step=0.01, format="%.2f")
+        with col_d:
+            notes_in = st.text_input("Notes", placeholder="Optional")
+        submitted = st.form_submit_button("Add / Update Holding")
+    if submitted and sym_in and qty_in >= 0 and price_in >= 0:
+        try:
+            upsert_holding(sym_in.upper(), float(qty_in), float(price_in), notes_in)
+            st.success("Holding saved.")
+        except Exception as e:
+            st.error(f"Failed to save holding: {e}")
+
+    holdings = load_portfolio()
+    if holdings:
+        # Fetch current prices via API for metrics table
+        prices_map = {}
+        for h in holdings:
+            try:
+                data = get_stock_data(h.symbol)
+                if data and "current_price" in data:
+                    prices_map[h.symbol] = data["current_price"]
+            except Exception:
+                continue
+        df_metrics = compute_portfolio_metrics(prices_map)
+        if not df_metrics.empty:
+            st.dataframe(df_metrics, use_container_width=True)
+            st.caption("Unrealized P&L based on current market price.")
+        # Remove holding UI
+        with st.expander("Remove a holding"):
+            to_remove = st.selectbox("Select symbol to remove", [h.symbol for h in holdings])
+            if st.button("Remove"):
+                remove_holding(to_remove)
+                st.success(f"Removed {to_remove}")
+    else:
+        st.info("No holdings yet. Add one above.")
+
+    st.markdown("---")
     
-    # Display recent logs if available
+    # --- Backtest Section ---
+    st.subheader("Backtest from Logs")
+    coll, colr = st.columns([1,3])
+    with coll:
+        days = st.number_input("Lookback days", min_value=7, max_value=365, value=30)
+        run_bt = st.button("Run Backtest")
+    if run_bt:
+        with st.spinner("Simulating trades from logs..."):
+            trades_df, summary = simulate_from_logs(int(days))
+        st.markdown("**Summary**")
+        st.metric("Win Rate", f"{summary.get('win_rate',0):.1f}%")
+        st.metric("Avg Return / Trade", f"{summary.get('avg_return_pct',0):.2f}%")
+        st.metric("Total Return (realized)", f"{summary.get('total_return_pct',0):.2f}%")
+        st.caption(f"Trades counted: {summary.get('num_trades',0)}")
+        if not trades_df.empty:
+            st.subheader("Executed Trades")
+            st.dataframe(trades_df, use_container_width=True)
+    
+    st.markdown("---")
+    
+    # --- Logs Section ---
     logs_file = "data/logs.csv"
+    st.subheader("Recent Trading Activity")
     if os.path.exists(logs_file):
         try:
             df_logs = pd.read_csv(logs_file)
-            st.subheader("Recent Trading Activity")
             st.dataframe(df_logs.tail(10), use_container_width=True)
         except Exception as e:
             st.warning(f"Could not load trading logs: {e}")
