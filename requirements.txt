@@ -9,3 +9,5 @@ fastapi
 uvicorn
 requests
 yfinance
+numpy
+pytest

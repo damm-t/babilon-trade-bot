@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+import yfinance as yf
 from broker.alpaca_client import get_alpaca_client, place_order
 from config import NEGATIVE_THRESHOLD, POSITIVE_THRESHOLD, STOCK_SYMBOLS
 from logic.trade_decision import generate_trade_signal
@@ -83,6 +84,29 @@ selected_stocks = st.sidebar.multiselect(
     default=STOCK_SYMBOLS[:1],
 )
 
+# Optional: fetching controls for historical data saving
+st.sidebar.subheader("📥 Historical Data Fetch")
+fetch_period = st.sidebar.selectbox(
+    "Period",
+    options=["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"],
+    index=3,
+)
+fetch_interval = st.sidebar.selectbox(
+    "Interval",
+    options=["1d", "1h", "30m", "15m"],
+    index=0,
+)
+auto_fetch_on_load = st.sidebar.checkbox("Auto-fetch OHLCV on load", value=False)
+fetch_button = st.sidebar.button("Fetch latest OHLCV to data/")
+
+# Date range filter for visualization
+today = datetime.date.today()
+default_start = today - datetime.timedelta(days=30)
+date_range = st.sidebar.date_input(
+    "Chart date range",
+    value=(default_start, today),
+)
+
 LOGS_DIR = "data"
 LOGS_FILE = os.path.join(LOGS_DIR, "logs.csv")
 if not os.path.exists(LOGS_DIR):
@@ -104,6 +128,75 @@ def log_decision(timestamp, input_text, sentiment, score, decision, stock_symbol
     else:
         df = pd.DataFrame([log_entry])
     df.to_csv(LOGS_FILE, index=False)
+
+
+def _fetch_and_save_history(symbol: str, period: str, interval: str) -> str:
+    ticker = yf.Ticker(symbol)
+    hist = ticker.history(period=period, interval=interval)
+    if hist is None or hist.empty:
+        raise ValueError(f"No data returned for {symbol}")
+    hist = hist.reset_index()
+    out_dir = "data"
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, f"{symbol.upper()}.csv")
+    hist.to_csv(out_path, index=False)
+    return out_path
+
+
+# Load candles from CSV if available
+def _load_csv_candles(symbol: str) -> list:
+    csv_path = os.path.join("data", f"\{symbol.upper()}\.csv").replace("\\", "").replace(" ", " ")
+    csv_path = os.path.join("data", f"{symbol.upper()}.csv")
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(csv_path)
+    df = pd.read_csv(csv_path)
+    # Try common yfinance columns
+    time_col = None
+    for c in ["Date", "Datetime", "date", "datetime", "Time", "time"]:
+        if c in df.columns:
+            time_col = c
+            break
+    if time_col is None:
+        raise ValueError("No time column found in CSV")
+    required = ["Open", "High", "Low", "Close"]
+    for c in required:
+        if c not in df.columns:
+            raise ValueError(f"Missing column {c} in CSV")
+    candles = []
+    for _, row in df.iterrows():
+        ts = pd.to_datetime(row[time_col]).isoformat()
+        candles.append({
+            "timestamp": ts,
+            "open": float(row["Open"]),
+            "high": float(row["High"]),
+            "low": float(row["Low"]),
+            "close": float(row["Close"]),
+        })
+    return candles
+
+
+# Perform auto-fetch once per session when enabled
+if auto_fetch_on_load and selected_stocks:
+    if "__auto_fetch_done__" not in st.session_state:
+        st.session_state["__auto_fetch_done__"] = True
+        for s in selected_stocks:
+            try:
+                path = _fetch_and_save_history(s, fetch_period, fetch_interval)
+                st.sidebar.success(f"Saved {s}: {path}")
+            except Exception as e:
+                st.sidebar.warning(f"Fetch failed for {s}: {e}")
+
+# Manual fetch button
+if fetch_button:
+    if not selected_stocks:
+        st.sidebar.warning("Please select at least one stock to fetch.")
+    else:
+        for s in selected_stocks:
+            try:
+                path = _fetch_and_save_history(s, fetch_period, fetch_interval)
+                st.sidebar.success(f"Saved {s}: {path}")
+            except Exception as e:
+                st.sidebar.warning(f"Fetch failed for {s}: {e}")
 
 
 if st.button("Analyze & Trade"):
@@ -149,10 +242,15 @@ if st.button("Analyze & Trade"):
             # --- Visualization Section ---
             chart_json_path = f"visualization/output/{stock}_chart.json"
             try:
-                with open(chart_json_path, "r") as f:
-                    chart_data = json.load(f)
-                candles = chart_data.get("candles", [])
-                signals = chart_data.get("signals", [])
+                # Prefer CSV from data/ if available
+                try:
+                    candles = _load_csv_candles(stock)
+                    signals = []
+                except Exception:
+                    with open(chart_json_path, "r") as f:
+                        chart_data = json.load(f)
+                    candles = chart_data.get("candles", [])
+                    signals = chart_data.get("signals", [])
                 # If force_test_signal is True, append a fake BUY marker
                 if force_test_signal:
                     if candles:
@@ -161,8 +259,22 @@ if st.button("Analyze & Trade"):
                 if not candles:
                     st.warning("No candle data available for visualization.")
                 else:
+                    # Filter candles by selected date range if provided
+                    try:
+                        if isinstance(date_range, (list, tuple)) and len(date_range) == 2:
+                            start_date, end_date = date_range
+                            def _in_range(ts):
+                                d = pd.to_datetime(ts).date()
+                                return (d >= start_date) and (d <= end_date)
+                            candles = [c for c in candles if _in_range(c.get("time") or c.get("timestamp"))]
+                            # reattach only signals that fall inside the range when timestamp is present
+                            if signals and isinstance(signals, list) and "timestamp" in signals[0]:
+                                signals = [s for s in signals if _in_range(s.get("timestamp"))]
+                    except Exception:
+                        pass
+
                     # Parse OHLCV
-                    times = [c["time"] for c in candles]
+                    times = [c.get("time") or c.get("timestamp") for c in candles]
                     opens = [c["open"] for c in candles]
                     highs = [c["high"] for c in candles]
                     lows = [c["low"] for c in candles]
@@ -181,29 +293,42 @@ if st.button("Analyze & Trade"):
                     )
                     # Overlay BUY/SELL markers
                     for sig in signals:
-                        idx = sig.get("index")
                         typ = sig.get("type")
-                        if (
-                            idx is not None
-                            and typ in ("BUY", "SELL")
-                            and 0 <= idx < len(times)
-                        ):
-                            color = "green" if typ == "BUY" else "red"
-                            symbol = "arrow-up" if typ == "BUY" else "arrow-down"
-                            price = closes[idx]
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=[times[idx]],
-                                    y=[price],
-                                    mode="markers+text",
-                                    marker=dict(symbol=symbol, color=color, size=16),
-                                    text=[typ],
-                                    textposition="top center"
-                                    if typ == "BUY"
-                                    else "bottom center",
-                                    name=typ,
+                        if typ not in ("BUY", "SELL"):
+                            continue
+                        # Prefer timestamped signals; fallback to index-based
+                        ts = sig.get("timestamp")
+                        if ts:
+                            # Find closest candle by time
+                            try:
+                                closest_idx = min(
+                                    range(len(times)),
+                                    key=lambda i: abs(pd.to_datetime(times[i]) - pd.to_datetime(ts)),
                                 )
+                            except Exception:
+                                closest_idx = None
+                        else:
+                            closest_idx = sig.get("index")
+                            if not isinstance(closest_idx, int):
+                                closest_idx = None
+
+                        if closest_idx is None or closest_idx < 0 or closest_idx >= len(times):
+                            continue
+
+                        color = "green" if typ == "BUY" else "red"
+                        symbol = "arrow-up" if typ == "BUY" else "arrow-down"
+                        price = closes[closest_idx]
+                        fig.add_trace(
+                            go.Scatter(
+                                x=[times[closest_idx]],
+                                y=[price],
+                                mode="markers+text",
+                                marker=dict(symbol=symbol, color=color, size=16),
+                                text=[typ],
+                                textposition="top center" if typ == "BUY" else "bottom center",
+                                name=typ,
                             )
+                        )
                     fig.update_layout(
                         title=f"{stock} Candlestick Chart with Signals",
                         xaxis_title="Time",

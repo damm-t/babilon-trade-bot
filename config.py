@@ -14,4 +14,10 @@ POSITIVE_THRESHOLD = float(os.getenv("POSITIVE_THRESHOLD", 0.65))
 NEGATIVE_THRESHOLD = float(os.getenv("NEGATIVE_THRESHOLD", 0.7))
 
 # Default stock symbols for analysis
-STOCK_SYMBOLS = ["AAPL", "TSLA", "NVDA", "MSFT", "GOOGL"]
+# Can be overridden via env var STOCK_SYMBOLS as a comma-separated list, e.g. "TSLA,XHR,XLK,RKT"
+_default_symbols = ["AAPL", "TSLA", "NVDA", "MSFT", "GOOGL", "XHR", "XLK", "RKT"]
+_env_symbols_raw = os.getenv("STOCK_SYMBOLS")
+if _env_symbols_raw:
+    STOCK_SYMBOLS = [s.strip().upper() for s in _env_symbols_raw.split(",") if s.strip()]
+else:
+    STOCK_SYMBOLS = _default_symbols

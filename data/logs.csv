@@ -20,3 +20,17 @@ timestamp,input_text,sentiment,score,decision,stock_symbol
 2025-09-05T11:32:38.749420,https://www.cnbc.com/2025/09/05/trum-japan-trade-deal-tariffs-ishiba-ldp-party.html,neutral,0.925466537475586,HOLD,GOOGL
 2025-09-06T22:55:31.875133,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.fool.com/investing/2025/09/06/nvidia-stock-is-a-5-trillion-valuation-inevitable/&ved=2ahUKEwil5_-lssSPAxUtTWwGHT9TGkEQvOMEKAB6BAgYEAE&usg=AOvVaw1C6YGPCVvEYocddlTcE1AX,neutral,0.89597088098526,HOLD,NVDA
 2025-09-10T22:58:12.392560,https://uk.finance.yahoo.com/video/more-mag-800-strategist-talks-135000782.html,neutral,0.9338975548744202,HOLD,AAPL
+2025-09-30T00:21:24.032363,wa,neutral,0.3133705854415893,HOLD,AAPL
+2025-10-01T01:07:11.590325,hi topday ,neutral,0.3063974380493164,HOLD,AAPL
+2025-10-01T01:07:22.153830,hi topday ,neutral,0.3063974380493164,HOLD,XLK
+2025-10-01T01:07:51.702418,hi topday ,neutral,0.3063974380493164,HOLD,XLK
+2025-10-01T01:08:06.304761,hi topday ,neutral,0.3063974380493164,HOLD,XLK
+2025-10-01T01:08:14.486859,hi topday ,neutral,0.3063974380493164,HOLD,AAPL
+2025-10-01T01:08:37.430310,hi topday ,neutral,0.3063974380493164,HOLD,AAPL
+2025-10-02T10:43:09.811011,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.tradingnews.com/news/nvidia-stock-price-forecast-nvda-soars-to-181-usd-as-46b-usd-quarterly-revenue-intel-partnership&ved=2ahUKEwiNvKeKv4SQAxUecGwGHa0RAHMQvOMEKAB6BAglEAE&usg=AOvVaw0qt01fmaBZ9qAIR9xHUNnf,neutral,0.5788367986679077,HOLD,NVDA
+2025-10-02T10:43:10.080938,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.tradingnews.com/news/nvidia-stock-price-forecast-nvda-soars-to-181-usd-as-46b-usd-quarterly-revenue-intel-partnership&ved=2ahUKEwiNvKeKv4SQAxUecGwGHa0RAHMQvOMEKAB6BAglEAE&usg=AOvVaw0qt01fmaBZ9qAIR9xHUNnf,neutral,0.5788367986679077,HOLD,NVDA
+2025-10-02T10:43:21.208838,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.tradingnews.com/news/nvidia-stock-price-forecast-nvda-soars-to-181-usd-as-46b-usd-quarterly-revenue-intel-partnership&ved=2ahUKEwiNvKeKv4SQAxUecGwGHa0RAHMQvOMEKAB6BAglEAE&usg=AOvVaw0qt01fmaBZ9qAIR9xHUNnf,neutral,0.5788367986679077,HOLD,NVDA
+2025-10-02T15:01:23.108059,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.bloomberg.com/news/articles/2025-10-01/taiwan-rejects-us-demand-for-half-of-chips-to-be-made-in-america&ved=2ahUKEwjenvPp94SQAxV0R2wGHRSiLVEQvOMEKAB6BAgdEAE&usg=AOvVaw0ym1vCS-qBr-tVoTAmdw6k,neutral,0.1555466651916504,HOLD,AAPL
+2025-10-02T15:01:23.867008,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.bloomberg.com/news/articles/2025-10-01/taiwan-rejects-us-demand-for-half-of-chips-to-be-made-in-america&ved=2ahUKEwjenvPp94SQAxV0R2wGHRSiLVEQvOMEKAB6BAgdEAE&usg=AOvVaw0ym1vCS-qBr-tVoTAmdw6k,neutral,0.1555466651916504,HOLD,AAPL
+2025-10-02T15:01:24.249001,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.bloomberg.com/news/articles/2025-10-01/taiwan-rejects-us-demand-for-half-of-chips-to-be-made-in-america&ved=2ahUKEwjenvPp94SQAxV0R2wGHRSiLVEQvOMEKAB6BAgdEAE&usg=AOvVaw0ym1vCS-qBr-tVoTAmdw6k,neutral,0.1555466651916504,HOLD,AAPL
+2025-10-02T15:01:24.858854,https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.bloomberg.com/news/articles/2025-10-01/taiwan-rejects-us-demand-for-half-of-chips-to-be-made-in-america&ved=2ahUKEwjenvPp94SQAxV0R2wGHRSiLVEQvOMEKAB6BAgdEAE&usg=AOvVaw0ym1vCS-qBr-tVoTAmdw6k,neutral,0.1555466651916504,HOLD,AAPL
