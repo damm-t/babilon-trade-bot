@@ -2,7 +2,12 @@
 import logging
 from functools import lru_cache
 
-from transformers import pipeline
+try:
+    from transformers import pipeline
+except ImportError:
+    # transformers not installed, create dummy function
+    def pipeline(*args, **kwargs):
+        raise ImportError("transformers not installed. Please install it with: pip install transformers torch")
 
 
 @lru_cache(maxsize=1)

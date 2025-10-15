@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  babilon-bot:
+    build: .
+    container_name: babilon-trade-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - LOG_LEVEL=INFO
+      - PYTHONPATH=/app
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./cache:/app/cache
+    ports:
+      - "8000:8000"   # API port
+      - "8501:8501"   # Streamlit port
+    healthcheck:
+      test: ["CMD", "python", "-c", "from broker.alpaca_client import AlpacaClient; AlpacaClient()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - babilon-network
+
+  # Optional: Redis for caching (if needed in future)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: babilon-redis
+  #   restart: unless-stopped
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - babilon-network
+
+  # Optional: Database for trade history (if needed in future)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: babilon-db
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: babilon
+  #     POSTGRES_USER: babilon
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   networks:
+  #     - babilon-network
+
+networks:
+  babilon-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+

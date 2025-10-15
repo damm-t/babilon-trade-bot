@@ -1,0 +1,95 @@
+# Babilon Trade Bot - Environment Configuration Template
+# Copy this file to .env and fill in your actual values
+
+# =============================================================================
+# ALPACA API CONFIGURATION (REQUIRED)
+# =============================================================================
+# Get these from your Alpaca account: https://app.alpaca.markets/paper/dashboard/overview
+ALPACA_API_KEY=your_paper_trading_api_key_here
+ALPACA_SECRET_KEY=your_paper_trading_secret_key_here
+
+# Alpaca API Base URL (usually paper trading)
+ALPACA_BASE_URL=https://paper-api.alpaca.markets
+
+# =============================================================================
+# TRADING CONFIGURATION
+# =============================================================================
+# Sentiment thresholds (0.0 to 1.0)
+# Higher values = more conservative trading (fewer trades)
+POSITIVE_THRESHOLD=0.65
+NEGATIVE_THRESHOLD=0.70
+TRADE_THRESHOLD=0.65  # Legacy threshold for backward compatibility
+
+# Default stock symbol for single-stock operations
+STOCK_SYMBOL=AAPL
+
+# Default stock symbols for multi-stock analysis (comma-separated)
+STOCK_SYMBOLS=AAPL,TSLA,NVDA,MSFT,GOOGL,XHR,XLK,RKT
+
+# =============================================================================
+# RISK MANAGEMENT CONFIGURATION
+# =============================================================================
+# Maximum position size in dollars
+MAX_POSITION_SIZE=1000.0
+
+# Maximum portfolio risk per trade (as percentage, e.g., 0.02 = 2%)
+MAX_PORTFOLIO_RISK=0.02
+
+# Stop loss percentage (e.g., 0.05 = 5% stop loss)
+STOP_LOSS_PERCENTAGE=0.05
+
+# Take profit percentage (e.g., 0.10 = 10% take profit)
+TAKE_PROFIT_PERCENTAGE=0.10
+
+# =============================================================================
+# API CONFIGURATION
+# =============================================================================
+# Maximum number of retries for failed API calls
+MAX_RETRIES=3
+
+# Delay between retries in seconds
+RETRY_DELAY=1.0
+
+# Request timeout in seconds
+REQUEST_TIMEOUT=30.0
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+# Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+LOG_LEVEL=INFO
+
+# Log format (Python logging format string)
+LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
+
+# =============================================================================
+# SECURITY NOTES
+# =============================================================================
+# 1. NEVER commit your actual .env file to version control
+# 2. Keep your API keys secure and don't share them
+# 3. Use paper trading keys for testing
+# 4. Consider using a secrets management service for production
+# 5. Regularly rotate your API keys
+
+# =============================================================================
+# EXAMPLE CONFIGURATIONS
+# =============================================================================
+
+# Conservative trading (fewer, more confident trades):
+# POSITIVE_THRESHOLD=0.75
+# NEGATIVE_THRESHOLD=0.80
+# MAX_PORTFOLIO_RISK=0.01
+# STOP_LOSS_PERCENTAGE=0.03
+
+# Aggressive trading (more frequent trades):
+# POSITIVE_THRESHOLD=0.55
+# NEGATIVE_THRESHOLD=0.60
+# MAX_PORTFOLIO_RISK=0.03
+# STOP_LOSS_PERCENTAGE=0.08
+
+# High-frequency trading setup:
+# MAX_RETRIES=5
+# RETRY_DELAY=0.5
+# REQUEST_TIMEOUT=10.0
+# LOG_LEVEL=DEBUG
+
