@@ -1,61 +1,70 @@
 version: '3.8'
 
 services:
-  babilon-bot:
+  # Main API service
+  babilon-api:
     build: .
-    container_name: babilon-trade-bot
-    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
     env_file:
       - .env
-    environment:
-      - LOG_LEVEL=INFO
-      - PYTHONPATH=/app
     volumes:
-      - ./logs:/app/logs
       - ./data:/app/data
-      - ./cache:/app/cache
-    ports:
-      - "8000:8000"   # API port
-      - "8501:8501"   # Streamlit port
+      - ./logs:/app/logs
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "from broker.alpaca_client import AlpacaClient; AlpacaClient()"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - babilon-network
 
-  # Optional: Redis for caching (if needed in future)
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: babilon-redis
-  #   restart: unless-stopped
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - babilon-network
+  # Streamlit web interface
+  babilon-web:
+    build: .
+    ports:
+      - "8501:8501"
+    command: streamlit run streamlit_unified.py --server.port=8501 --server.address=0.0.0.0
+    environment:
+      - PYTHONPATH=/app
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - babilon-api
+    restart: unless-stopped
 
-  # Optional: Database for trade history (if needed in future)
-  # postgres:
-  #   image: postgres:15-alpine
-  #   container_name: babilon-db
-  #   restart: unless-stopped
-  #   environment:
-  #     POSTGRES_DB: babilon
-  #     POSTGRES_USER: babilon
-  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   networks:
-  #     - babilon-network
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
 
-networks:
-  babilon-network:
-    driver: bridge
+  # PostgreSQL for persistent data (optional)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: babilon
+      POSTGRES_USER: babilon
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-babilon123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
 
 volumes:
+  redis_data:
   postgres_data:
 
+networks:
+  default:
+    name: babilon-network

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Babilon Trade Bot Setup Script
-Automated setup and configuration for the Babilon Trade Bot
+Babilon Trade Bot - Automated Setup Script
 """
 
 import os
@@ -11,234 +10,182 @@ import shutil
 from pathlib import Path
 
 
-def run_command(command, description=""):
-    """Run a command and handle errors"""
-    print(f"🔄 {description}")
+def run_command(command, description):
+    """Run a command and handle errors."""
+    print(f"🔧 {description}...")
     try:
         result = subprocess.run(command, shell=True, check=True, capture_output=True, text=True)
-        print(f"✅ {description} - Success")
+        print(f"✅ {description} completed successfully")
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ {description} - Failed")
-        print(f"Error: {e.stderr}")
+        print(f"❌ {description} failed: {e}")
+        print(f"Error output: {e.stderr}")
         return False
 
 
 def check_python_version():
-    """Check if Python version is compatible"""
+    """Check if Python version is compatible."""
     print("🐍 Checking Python version...")
-    version = sys.version_info
-    if version.major < 3 or (version.major == 3 and version.minor < 8):
-        print(f"❌ Python 3.8+ required, found {version.major}.{version.minor}")
+    if sys.version_info < (3, 8):
+        print("❌ Python 3.8 or higher is required")
         return False
-    print(f"✅ Python {version.major}.{version.minor}.{version.micro} - Compatible")
+    print(f"✅ Python {sys.version_info.major}.{sys.version_info.minor} is compatible")
     return True
 
 
-def create_virtual_environment():
-    """Create and activate virtual environment"""
-    print("📦 Setting up virtual environment...")
-    
-    venv_path = Path("venv")
+def setup_virtual_environment():
+    """Set up virtual environment."""
+    venv_path = Path(".venv")
     if venv_path.exists():
-        print("⚠️  Virtual environment already exists")
+        print("✅ Virtual environment already exists")
         return True
     
-    if not run_command("python -m venv venv", "Creating virtual environment"):
+    print("📦 Creating virtual environment...")
+    if not run_command(f"{sys.executable} -m venv .venv", "Creating virtual environment"):
         return False
     
-    # Determine activation script based on OS
-    if os.name == 'nt':  # Windows
-        activate_script = "venv\\Scripts\\activate.bat"
-        pip_cmd = "venv\\Scripts\\pip"
-    else:  # Unix-like
-        activate_script = "source venv/bin/activate"
-        pip_cmd = "venv/bin/pip"
-    
-    print(f"✅ Virtual environment created")
-    print(f"💡 To activate: {activate_script}")
     return True
 
 
 def install_dependencies():
-    """Install Python dependencies"""
-    print("📚 Installing dependencies...")
-    
-    # Determine pip command based on OS
+    """Install project dependencies."""
+    # Determine the correct pip path
     if os.name == 'nt':  # Windows
-        pip_cmd = "venv\\Scripts\\pip"
-    else:  # Unix-like
-        pip_cmd = "venv/bin/pip"
+        pip_path = ".venv/Scripts/pip"
+    else:  # Unix/Linux/macOS
+        pip_path = ".venv/bin/pip"
     
-    if not run_command(f"{pip_cmd} install --upgrade pip", "Upgrading pip"):
+    if not run_command(f"{pip_path} install --upgrade pip", "Upgrading pip"):
         return False
     
-    if not run_command(f"{pip_cmd} install -r requirements.txt", "Installing dependencies"):
+    if not run_command(f"{pip_path} install -r requirements.txt", "Installing dependencies"):
         return False
     
     return True
 
 
 def setup_environment_file():
-    """Set up environment configuration file"""
-    print("🔧 Setting up environment configuration...")
-    
+    """Set up environment file."""
     env_file = Path(".env")
     env_template = Path("env_template.txt")
     
     if env_file.exists():
-        print("⚠️  .env file already exists")
-        response = input("Do you want to overwrite it? (y/N): ").strip().lower()
-        if response != 'y':
-            print("✅ Keeping existing .env file")
-            return True
+        print("✅ .env file already exists")
+        return True
     
     if not env_template.exists():
         print("❌ env_template.txt not found")
         return False
     
-    # Copy template to .env
-    shutil.copy(env_template, env_file)
-    print("✅ Created .env file from template")
-    
-    print("\n🔑 IMPORTANT: Please edit .env file and add your API keys:")
-    print("   1. Get Alpaca API keys from: https://app.alpaca.markets/paper/dashboard/overview")
-    print("   2. Edit .env file and replace 'your_paper_trading_api_key_here' with your actual keys")
-    print("   3. Adjust trading parameters as needed")
-    
-    return True
+    print("📝 Creating .env file from template...")
+    try:
+        shutil.copy(env_template, env_file)
+        print("✅ .env file created successfully")
+        print("⚠️  Please edit .env file with your actual API keys and preferences")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to create .env file: {e}")
+        return False
 
 
 def create_directories():
-    """Create necessary directories"""
-    print("📁 Creating directories...")
-    
-    directories = ["logs", "data", "cache", "reports"]
+    """Create necessary directories."""
+    directories = ["data", "logs", "models", "tests"]
     
     for directory in directories:
         dir_path = Path(directory)
         if not dir_path.exists():
+            print(f"📁 Creating {directory} directory...")
             dir_path.mkdir(parents=True, exist_ok=True)
-            print(f"✅ Created {directory}/ directory")
         else:
-            print(f"⚠️  {directory}/ directory already exists")
-    
-    return True
+            print(f"✅ {directory} directory already exists")
 
 
 def run_tests():
-    """Run the test suite"""
-    print("🧪 Running tests...")
-    
-    # Determine pytest command based on OS
+    """Run basic tests to verify installation."""
+    # Determine the correct python path
     if os.name == 'nt':  # Windows
-        pytest_cmd = "venv\\Scripts\\pytest"
-    else:  # Unix-like
-        pytest_cmd = "venv/bin/pytest"
+        python_path = ".venv/Scripts/python"
+    else:  # Unix/Linux/macOS
+        python_path = ".venv/bin/python"
     
-    # Set dummy environment variables for testing
-    env = os.environ.copy()
-    env.update({
-        'ALPACA_API_KEY': 'test_key',
-        'ALPACA_SECRET_KEY': 'test_secret'
-    })
-    
-    if not run_command(f"{pytest_cmd} tests/ -v", "Running test suite"):
-        print("⚠️  Some tests failed, but this is normal without valid API keys")
+    print("🧪 Running basic tests...")
+    if run_command(f"{python_path} -m pytest tests/ -v", "Running tests"):
+        print("✅ All tests passed!")
         return True
-    
-    return True
+    else:
+        print("⚠️  Some tests failed, but setup is still functional")
+        return True  # Don't fail setup if tests fail
 
 
-def check_git_setup():
-    """Check and setup Git configuration"""
-    print("🔍 Checking Git setup...")
+def print_next_steps():
+    """Print next steps for the user."""
+    print("\n" + "="*60)
+    print("🎉 Babilon Trade Bot setup completed!")
+    print("="*60)
+    print("\n📋 Next Steps:")
+    print("1. Edit .env file with your Alpaca API keys")
+    print("2. Get paper trading API keys from: https://app.alpaca.markets/paper/dashboard/overview")
+    print("3. Activate virtual environment:")
     
-    if not run_command("git --version", "Checking Git installation"):
-        print("❌ Git not found. Please install Git first")
-        return False
+    if os.name == 'nt':  # Windows
+        print("   .venv\\Scripts\\activate")
+    else:  # Unix/Linux/macOS
+        print("   source .venv/bin/activate")
     
-    # Check if this is a git repository
-    if not Path(".git").exists():
-        print("📝 Initializing Git repository...")
-        if not run_command("git init", "Initializing Git repository"):
-            return False
-        
-        if not run_command("git add .", "Adding files to Git"):
-            return False
-        
-        if not run_command('git commit -m "Initial commit"', "Making initial commit"):
-            return False
+    print("\n4. Run the application:")
+    print("   # Web interface")
+    print("   streamlit run streamlit_unified.py")
+    print("\n   # API server")
+    print("   python api.py")
+    print("\n   # CLI interface")
+    print("   python main.py")
     
-    return True
+    print("\n🐳 Docker (Alternative):")
+    print("   docker-compose up -d")
+    
+    print("\n⚠️  Important Notes:")
+    print("- This bot is for educational purposes only")
+    print("- Start with paper trading API keys")
+    print("- Never commit your .env file to version control")
+    print("- Trading involves substantial risk of loss")
+    
+    print("\n📖 Documentation:")
+    print("- README.md - Basic usage")
+    print("- README_ENHANCED.md - Comprehensive guide")
+    print("- WhatToDo.md - Implementation roadmap")
 
 
 def main():
-    """Main setup function"""
-    print("🚀 Babilon Trade Bot Setup")
-    print("=" * 50)
+    """Main setup function."""
+    print("🚀 Babilon Trade Bot - Automated Setup")
+    print("="*50)
     
-    # Check prerequisites
+    # Check Python version
     if not check_python_version():
         sys.exit(1)
     
-    # Setup steps
-    steps = [
-        ("Creating virtual environment", create_virtual_environment),
-        ("Installing dependencies", install_dependencies),
-        ("Setting up environment file", setup_environment_file),
-        ("Creating directories", create_directories),
-        ("Checking Git setup", check_git_setup),
-        ("Running tests", run_tests),
-    ]
+    # Set up virtual environment
+    if not setup_virtual_environment():
+        sys.exit(1)
     
-    failed_steps = []
+    # Install dependencies
+    if not install_dependencies():
+        sys.exit(1)
     
-    for step_name, step_function in steps:
-        print(f"\n📋 {step_name}")
-        print("-" * 30)
-        
-        if not step_function():
-            failed_steps.append(step_name)
-            print(f"❌ Failed: {step_name}")
-        else:
-            print(f"✅ Success: {step_name}")
+    # Set up environment file
+    if not setup_environment_file():
+        sys.exit(1)
     
-    # Summary
-    print("\n" + "=" * 50)
-    print("🎉 Setup Complete!")
+    # Create directories
+    create_directories()
     
-    if failed_steps:
-        print(f"\n⚠️  Some steps failed:")
-        for step in failed_steps:
-            print(f"   - {step}")
-        print("\nPlease check the errors above and run setup again if needed.")
-    else:
-        print("\n✅ All setup steps completed successfully!")
+    # Run tests
+    run_tests()
     
-    print("\n📖 Next Steps:")
-    print("1. Edit .env file with your Alpaca API keys")
-    print("2. Activate virtual environment:")
-    if os.name == 'nt':
-        print("   venv\\Scripts\\activate")
-    else:
-        print("   source venv/bin/activate")
-    print("3. Run the bot:")
-    print("   python main.py")
-    print("4. Or start the web interface:")
-    print("   streamlit run streamlit_app.py")
-    
-    print("\n📚 Documentation:")
-    print("   - README_ENHANCED.md - Comprehensive documentation")
-    print("   - env_template.txt - Configuration template")
-    print("   - tests/ - Test suite")
-    
-    print("\n🔒 Security Note:")
-    print("   - Never commit your .env file to version control")
-    print("   - Use paper trading keys for testing")
-    print("   - Keep your API keys secure")
+    # Print next steps
+    print_next_steps()
 
 
 if __name__ == "__main__":
     main()
-

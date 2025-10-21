@@ -199,3 +199,40 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Made with ❤️ for the trading community**
 
 > ⚠️ **Disclaimer**: This software is for educational purposes only. Trading involves substantial risk of loss and is not suitable for all investors. Past performance is not indicative of future results.
+
+# Babilon v3 — Architecture Diagram & Implementation Roadmap
+
+**Purpose:** A complete, actionable blueprint to evolve *Babilon Trade Bot* into a hybrid AI-driven trading system (sentiment + market signals), with milestones, file layout, data flow, and implementation tasks.
+
+---
+
+## 1. Overview
+
+Goal: turn the repo from a FinBERT + rule system into a production-ready hybrid signal engine that:
+
+* Combines sentiment and market features
+* Trains lightweight ML models and ensembles with rule logic
+* Backtests with realistic market constraints
+* Executes safe paper trades with risk controls
+* Provides monitoring, retraining, and observability
+
+---
+
+## 2. High-level Architecture (Mermaid)
+
+```mermaid
+flowchart TD
+  subgraph INPUTS
+    A[News & Text APIs]\n(NewsAPI, RSS, Twitter, Reddit) -->|articles| B[Text Preprocessing]
+    C[Market Data APIs]\n(Yahoo, Alpaca, Polygon) -->|price ticks| D[Price/TA Engine]
+  end
+
+  B --> E[Sentiment Models]\nE --> F[Feature Fusion]
+  D --> F
+
+  F --> G[Signal Engine]\n  subgraph MODEL
+    G --> H[ML Model (LightGBM/XGBoost)]
+    G --> I[Rule Logic / Heuristics]
+    H --> J[Ensembler]
+    I --> J
+```
